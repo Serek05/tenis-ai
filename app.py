@@ -1,24 +1,29 @@
 import streamlit as st
 import requests
 
-# TWÓJ KLUCZ WPISANY NA SZTYWNO
-MOJ_KLUCZ = "8e65c70e422cd12b3be347f106596f7d"
-
 st.title("🎾 Moje AI Tenisowe")
 
-if st.button("Pobierz dzisiejsze mecze"):
+# TWOJE DANE KONFIGURACYJNE
+KLUCZ = "8e65c70e422cd12b3be347f106596f7d"
+ADRES = "https://the-odds-api.com"
+
+if st.button("POBIERZ MECZE"):
     try:
-        # NAJPROSTSZY MOŻLIWY ADRES BEZ TRUDNYCH ZNAKÓW
-        url = "https://the-odds-api.com" + MOJ_KLUCZ + "&regions=eu&markets=h2h"
-        
-        odpowiedz = requests.get(url, timeout=15)
+        # Budujemy zapytanie krok po kroku, żeby telefon nic nie zepsuł
+        parametry = {
+            "apiKey": KLUCZ,
+            "regions": "eu",
+            "markets": "h2h"
+        }
+        odpowiedz = requests.get(ADRES, params=parametry)
         
         if odpowiedz.status_code == 200:
-            dane = odpowiedz.json()
-            st.success("W KOŃCU DZIAŁA! Pobrano mecze.")
-            st.write(dane[:2]) # Pokazuje tylko 2 mecze
+            mecze = odpowiedz.json()
+            st.success(f"UDAŁO SIĘ! Znaleziono {len(mecze)} meczów.")
+            st.write(mecze[:3]) # Pokaż 3 pierwsze mecze
         else:
-            st.error("Serwer odrzucił klucz. Kod: " + str(odpowiedz.status_code))
+            st.error(f"Błąd serwera: {odpowiedz.status_code}")
             
     except Exception as e:
-        st.error("Błąd: " + str(e))
+        st.error(f"Błąd połączenia: {e}")
+        
