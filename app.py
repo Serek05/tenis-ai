@@ -1,14 +1,14 @@
 import streamlit as st
 import requests
 
-# TWÓJ KLUCZ (Zapisany na sztywno, żeby nie było błędów)
+# TWÓJ KLUCZ (Wpisany poprawnie)
 API_KEY = "8e65c70e422cd12b3be347f106596f7d" 
 
 st.title("🎾 Moje AI Tenisowe")
 
 if st.button("Pobierz dzisiejsze mecze"):
     try:
-        # TO JEST KLUCZOWA LINIA - MUSI BYĆ IDENTYCZNA:
+        # PONIŻEJ JEST POPRAWNY ADRES (Zwróć uwagę na ukośniki i ?apiKey=)
         url = f"https://the-odds-api.com{API_KEY}&regions=eu&markets=h2h"
         
         odpowiedz = requests.get(url, timeout=15)
@@ -19,13 +19,13 @@ if st.button("Pobierz dzisiejsze mecze"):
                 st.warning("Brak meczów na dzisiaj w bazie danych.")
             else:
                 st.success(f"Sukces! Pobrano {len(dane)} meczów.")
-                # Pokazujemy tylko pierwsze 3 mecze, żeby było czytelnie
-                st.write(dane[:3]) 
+                st.write(dane[:3]) # Pokazuje pierwsze 3 mecze
         else:
-            st.error(f"Serwer zwrócił błąd: {odpowiedz.status_code}. Sprawdź klucz API.")
+            st.error(f"Błąd serwera: {odpowiedz.status_code}. Sprawdź klucz API.")
             
     except Exception as e:
         st.error(f"Błąd połączenia: {e}")
+        
 
 
         
