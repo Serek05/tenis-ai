@@ -8,7 +8,7 @@ KLUCZ = "8e65c70e422cd12b3be347f106596f7d"
 if st.button("ANALIZUJ DZISIEJSZE MECZE"):
     try:
         # PAMIĘTAJ O TYCH SPACJACH NA POCZĄTKU LINII:
-        url = "https://api.the-odds-api.com/v4/sports/tennis_atp/odds/?regions=eu&markets=h2h&apiKey=" + KLUCZ
+        url = "https://api.the-odds-api.com/v4/sports/tennis/odds/?regions=eu&markets=h2h&apiKey=" + KLUCZ
         odpowiedz = requests.get(url, timeout=15)
         
         if odpowiedz.status_code == 200:
