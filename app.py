@@ -1,39 +1,40 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="Tenis AI", page_icon="🎾")
-st.title("🎾 Moje Inteligentne AI Tenisowe")
+st.set_page_config(page_title="Tenis AI - Value Hunter", page_icon="🎯")
+st.title("🎯 Łowca Valuebetów Tenisowych")
 
 KLUCZ = "8e65c70e422cd12b3be347f106596f7d"
-# POPRAWIONY ADRES URL (z api. i pełną ścieżką do tenisa)
 URL = "https://api.the-odds-api.com/v4/sports/tennis/odds/?regions=eu&markets=h2h&apiKey=" + KLUCZ
 
 
-if st.button("ANALIZUJ MECZE I OBLICZ SZANSE"):
+if st.button("SZUKAJ VALUEBETÓW"):
     try:
         odpowiedz = requests.get(URL, timeout=15)
         if odpowiedz.status_code == 200:
             dane = odpowiedz.json()
-            st.success(f"Analizuję {len(dane)} meczów...")
+            st.info(f"Skanuję {len(dane)} meczów w poszukiwaniu błędów bukmacherów...")
             
             for mecz in dane:
-                st.subheader(f"🏆 {mecz['home_team']} vs {mecz['away_team']}")
-                
-                if len(mecz['bookmakers']) > 0:
-                    # Dodane [0], aby brać dane od pierwszego bukmachera na liście
-                    kursy = mecz['bookmakers'][0]['markets'][0]['outcomes']
+                if len(mecz['bookmakers']) > 1: # Potrzebujemy min. 2 bukmacherów do porównania
+                    # Pobieramy kursy od wszystkich dostępnych buków
+                    wszystkie_kursy_p1 = [b['markets'][0]['outcomes'][0]['price'] for b in mecz['bookmakers']]
+                    wszystkie_kursy_p2 = [b['markets'][0]['outcomes'][1]['price'] for b in mecz['bookmakers']]
                     
-                    col1, col2 = st.columns(2)
-                    for wynik in kursy:
-                        szansa = (1 / wynik['price']) * 100
-                        
-                        if wynik['name'] == mecz['home_team']:
-                            col1.metric(wynik['name'], f"Kurs: {wynik['price']}", f"{szansa:.1f}% szans")
-                        else:
-                            col2.metric(wynik['name'], f"Kurs: {wynik['price']}", f"{szansa:.1f}% szans")
-                st.divider()
+                    sredni_kurs_p1 = sum(wszystkie_kursy_p1) / len(wszystkie_kursy_p1)
+                    najlepszy_kurs_p1 = max(wszystkie_kursy_p1)
+                    
+                    # OBLICZANIE VALUE (Wartości)
+                    # Jeśli najlepszy kurs jest o 5% wyższy niż średnia rynkowa -> mamy VALUE!
+                    value_p1 = (najlepszy_kurs_p1 / sredni_kurs_p1) - 1
+                    
+                    if value_p1 > 0.05: # Próg 5% wartości
+                        st.success(f"💎 VALUEBET WYKRYTY: {mecz['home_team']}")
+                        st.write(f"Mecz: {mecz['home_team']} vs {mecz['away_team']}")
+                        st.write(f"Kurs u tego buka: **{najlepszy_kurs_p1}** (Średnia rynkowa: {sredni_kurs_p1:.2f})")
+                        st.write(f"Zysk matematyczny: **+{value_p1*100:.1f}%**")
+                        st.divider()
         else:
-            st.error(f"Błąd serwera: {odpowiedz.status_code}")
+            st.error("Błąd bazy danych.")
     except Exception as e:
         st.error(f"Błąd: {e}")
-        
