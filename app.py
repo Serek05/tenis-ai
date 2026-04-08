@@ -65,6 +65,11 @@ def szukaj_value(sport_key, sport_name):
 
 c1, c2 = st.columns(2)
 with c1:
-    if st.button("🎾 TENIS (ATP)"): szukaj_value("tennis_atp", "ATP Tour")
+    # Poprawka: zmieniono 'tennis_atp' na 'tennis', aby uniknąć błędu 404
+    if st.button("🎾 TENIS (ATP)"): 
+        szukaj_value("tennis", "ATP Tour")
 with c2:
-    if st.button("🏀 KOSZYKÓWKA (NBA)"): szukaj_value("basketball_nba", "NBA")
+    if st.button("🏀 KOSZYKÓWKA (NBA)"): 
+        szukaj_value("basketball_nba", "NBA")
+
+
