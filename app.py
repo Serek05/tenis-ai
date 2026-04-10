@@ -39,8 +39,8 @@ def szukaj_value(sport_key, sport_name):
                         najlepszy = max(kursy)
                         value = (najlepszy / srednia) - 1
                         
-                        # PARAMETRY NISZY: Kurs do 3.50 i Value > 7%
-                        if 1.30 <= najlepszy <= 3.50 and value > 0.07:
+                        # PARAMETRY NISZY: Kurs do 3.00 i Value > 5%
+                        if 1.30 <= najlepszy <= 3.00 and value > 0.05:
                             wyniki_meczu.append({'nazwa': t_name, 'kurs': najlepszy, 'val': value})
                     except: continue
                 
