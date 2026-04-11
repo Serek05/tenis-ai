@@ -30,7 +30,7 @@ def szukaj_value(sport_key, sport_name):
         # Skaczemy do jutra do godziny 06:00 rano
         start_skanu = (teraz + timedelta(days=1)).replace(hour=6, minute=0, second=0).strftime("%Y-%m-%dT%H:%M:%SZ")
         koniec_skanu = (teraz + timedelta(days=1)).replace(hour=23, minute=59, second=59).strftime("%Y-%m-%dT%H:%M:%SZ")
-        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeTo={jutro}&apiKey={KLUCZ}"
+        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}"
     else:
         # Standardowy skan od teraz do jutra
         koniec_skanu = (teraz + timedelta(days=1)).replace(hour=23, minute=59, second=59).strftime("%Y-%m-%dT%H:%M:%SZ")
