@@ -20,12 +20,12 @@ st.sidebar.markdown("""
 KLUCZ = "8e65c70e422cd12b3be347f106596f7d"
 
 def szukaj_value(sport_key, sport_name):
-    # Okno czasowe: do jutra do końca dnia
-    jutro_koniec = (datetime.utcnow() + timedelta(days=1)).replace(hour=23, minute=59, second=59).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # 1. NAPRAWA NameError: Definiujemy zmienną 'jutro' wewnątrz funkcji
+    jutro = (datetime.utcnow() + timedelta(days=1)).replace(hour=23, minute=59, second=59).strftime("%Y-%m-%dT%H:%M:%SZ")
     
-    # JEDYNY POPRAWNY URL:
+    # 2. POPRAWNY URL z filtrem czasowym
     url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeTo={jutro}&apiKey={KLUCZ}"
-    
+
     try:
         odpowiedz = requests.get(url, timeout=15)
         if odpowiedz.status_code == 200:
@@ -38,13 +38,14 @@ def szukaj_value(sport_key, sport_name):
             for mecz in dane:
                 start_time_utc = datetime.strptime(mecz['commence_time'], "%Y-%m-%dT%H:%M:%SZ")
                 
-                # POMIŃ MECZE JUŻ TRWAJĄCE
+                # POMIŃ MECZE JUŻ TRWAJĄCE (Zapobiega "Value widmo")
                 if start_time_utc < teraz_utc:
                     continue
                 
                 bookmakers = mecz.get('bookmakers', [])
                 if len(bookmakers) < 3: continue
                 
+                # Konwersja czasu na polski
                 start_time_pl = start_time_utc + timedelta(hours=2)
                 czas_str = start_time_pl.strftime("%d.%m %H:%M")
                 
@@ -79,14 +80,14 @@ def szukaj_value(sport_key, sport_name):
                     
                     st.write("🔗 **Sprawdź u polskich buków:**")
                     col1, col2, col3, col4 = st.columns(4)
-                    with col1: st.markdown("[STS](https://www.sts.pl)")
-                    with col2: st.markdown("[Superbet](https://www.superbet.pl)")
-                    with col3: st.markdown("[Fortuna](https://www.efortuna.pl)")
-                    with col4: st.markdown("[Totalbet](https://www.totalbet.pl)")
+                    with col1: st.markdown("[STS](https://sts.pl)")
+                    with col2: st.markdown("[Superbet](https://superbet.pl)")
+                    with col3: st.markdown("[Fortuna](https://efortuna.pl)")
+                    with col4: st.markdown("[Totalbet](https://totalbet.pl)")
                     st.divider()
             
             if znaleziono == 0: st.warning("Brak nowych okazji na najbliższe 24h.")
-        else: st.error(f"Błąd API: {odpowiedz.status_code}")
+        else: st.error(f"Błąd API: {odpowiedz.status_code}. Sprawdź klucz.")
     except Exception as e: st.error(f"Błąd techniczny: {e}")
 
 c1, c2, c3 = st.columns(3)
