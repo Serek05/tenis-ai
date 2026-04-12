@@ -2,61 +2,56 @@ import streamlit as st
 import requests
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="AI Skaner 4.8 - Deep Future", page_icon="🇵🇱")
-st.title("🇵🇱 AI Skaner 4.8: Globalny Łowca")
+st.set_page_config(page_title="AI Skaner 4.9.1 - Time Machine", page_icon="🎯")
+st.title("🎯 AI Skaner 4.9.1: Maszyna Czasu")
 
-# Pasek boczny ze strategią BukMichała
-st.sidebar.header("🛡️ Strategia 7 Kroków")
-st.sidebar.markdown("""
-1. **Skanuj AI** (Value > 5%)
-2. **Sprawdź Buka** (Kurs >= AI)
-3. **Czas meczu** (Omiń te 'na już')
-4. **Limit 3.0** (Stabilność)
-5. **Stawka 2%** (Zarządzanie)
-6. **Zapisz w Dzienniku**
-7. **Zero Emocji**
-""")
-
-# Wybór horyzontu czasowego
-horyzont = st.radio("Kiedy szukasz okazji?", ["Na teraz (Najbliższe godziny)", "Jutro / Przyszłość (Głęboki skan)"])
-
+# --- KONFIGURACJA W PASKU BOCZNYM ---
+st.sidebar.header("⚙️ Ustawienia Skanera")
 KLUCZ = "8e65c70e422cd12b3be347f106596f7d"
 
-def szukaj_value(sport_key, sport_name):
-    teraz = datetime.utcnow()
-    
-    if horyzont == "Jutro / Przyszłość (Głęboki skan)":
-        # 1. TUTAJ TWORZYMY ZMIENNĄ (To naprawia NameError)
-        dzis_koniec = (teraz + timedelta(days=1)).replace(hour=2, minute=0, second=0).strftime("%Y-%m-%dT%H:%M:%SZ")
-        
-        # 2. TUTAJ JEJ UŻYWAMY
-        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={dzis_koniec}&apiKey={KLUCZ}"
-    
-    else:
-        # Dla opcji "Na teraz" tworzymy inną zmienną
-        koniec_skanu = (teraz + timedelta(hours=12)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}"
+# SUWAK: Pozwala przesunąć start skanowania (od 0 do 72 godzin do przodu)
+skok_czasu = st.sidebar.slider("Przesuń start skanowania o (godziny):", 0, 72, 0)
 
+# Obliczamy czas dla użytkownika
+teraz_pl = datetime.now()
+start_punkt_pl = teraz_pl + timedelta(hours=skok_czasu)
+st.sidebar.info(f"Skanuję mecze zaczynające się OD: {start_punkt_pl.strftime('%d.%m o %H:%M')}")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("""
+**🛡️ Strategia 7 Kroków:**
+1. Ustaw suwak (np. 24h dla jutra).
+2. Kliknij przycisk sportu.
+3. Szukaj Value > 5%.
+4. Sprawdź u polskiego buka.
+5. Kurs musi być >= Kurs AI.
+6. Stawka max 2%.
+7. Zapisz w dzienniku.
+""")
+
+def szukaj_value(sport_key, sport_name):
+    teraz_utc = datetime.utcnow()
+    
+    # Dynamiczne okno czasowe (ISO 8601)
+    start_skanu = (teraz_utc + timedelta(hours=skok_czasu)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    koniec_skanu = (teraz_utc + timedelta(hours=skok_czasu + 24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    
+    # JEDYNY POPRAWNY URL:
+    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}"
     
     try:
         odpowiedz = requests.get(url, timeout=15)
         if odpowiedz.status_code == 200:
             dane = odpowiedz.json()
             znaleziono = 0
-            st.info(f"Analizuję: {sport_name}...")
+            st.info(f"Analizuję {len(dane)} meczów dla: {sport_name}")
             
             for mecz in dane:
-                start_time_utc = datetime.strptime(mecz['commence_time'], "%Y-%m-%dT%H:%M:%SZ")
-                
-                # Zabezpieczenie: pomiń mecze, które już trwają
-                if start_time_utc < teraz:
-                    continue
-                
                 bookmakers = mecz.get('bookmakers', [])
                 if len(bookmakers) < 3: continue
                 
-                # Konwersja na czas polski
-                start_time_pl = start_time_utc + timedelta(hours=2)
+                # Konwersja czasu na polski (UTC + 2)
+                start_time_pl = datetime.strptime(mecz['commence_time'], "%Y-%m-%dT%H:%M:%SZ") + timedelta(hours=2)
                 czas_str = start_time_pl.strftime("%d.%m %H:%M")
                 
                 wyniki_meczu = []
@@ -77,7 +72,6 @@ def szukaj_value(sport_key, sport_name):
                         najlepszy = max(kursy)
                         value = (najlepszy / srednia) - 1
                         
-                        # FILTR: Kurs 1.30 - 3.00, Value > 5%
                         if 1.30 <= najlepszy <= 3.00 and value > 0.05:
                             wyniki_meczu.append({'nazwa': t_name, 'kurs': najlepszy, 'val': value})
                     except: continue
@@ -86,25 +80,29 @@ def szukaj_value(sport_key, sport_name):
                     res = wyniki_meczu[0]
                     znaleziono += 1
                     st.success(f"💎 OKAZJA: {res['nazwa']}")
-                    st.write(f"🏟️ Liga: **{mecz.get('sport_title')}** | ⏰ Start (PL): **{czas_str}**")
+                    st.write(f"🏟️ {mecz.get('sport_title')} | ⏰ {czas_str}")
+                    st.write(f"⚔️ {mecz['home_team']} vs {mecz['away_team']}")
                     st.write(f"📈 Kurs AI: **{res['kurs']}** | Przewaga: **+{res['val']*100:.1f}%**")
                     
                     st.write("🔗 **Sprawdź u polskich buków:**")
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1: st.markdown("[STS](https://www.sts.pl)")
-                    with col2: st.markdown("[Superbet](https://www.superbet.pl)")
-                    with col3: st.markdown("[Fortuna](https://www.efortuna.pl)")
-                    with col4: st.markdown("[Totalbet](https://www.totalbet.pl)")
+                    c1, c2, c3 = st.columns(3)
+                    with c1: st.markdown("[Superbet](https://superbet.pl)")
+                    with c2: st.markdown("[STS](https://www.sts.pl)")
+                    with c3: st.markdown("[Fortuna](https://www.efortuna.pl)")
                     st.divider()
             
-            if znaleziono == 0: st.warning("Brak okazji na wybrany termin.")
-        else: st.error(f"Błąd API: {odpowiedz.status_code}. Sprawdź limity.")
-    except Exception as e: st.error(f"Błąd techniczny: {e}")
+            if znaleziono == 0: 
+                st.warning("Brak okazji. Przesuń suwak dalej (np. na 24h lub 48h).")
+        else: 
+            st.error(f"Błąd API: {odpowiedz.status_code}. Sprawdź kredyty.")
+    except Exception as e: 
+        st.error(f"Błąd techniczny: {e}")
 
-c1, c2, c3 = st.columns(3)
-with c1:
+# --- PRZYCISKI GŁÓWNE ---
+col1, col2, col3 = st.columns(3)
+with col1:
     if st.button("🎾 TENIS"): szukaj_value("tennis", "Tenis")
-with c2:
+with col2:
     if st.button("🏀 KOSZ"): szukaj_value("basketball", "Koszykówka")
-with c3:
+with col3:
     if st.button("⚽ PIŁKA"): szukaj_value("soccer", "Piłka Nożna")
