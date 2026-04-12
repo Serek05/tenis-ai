@@ -17,6 +17,9 @@ teraz_pl = datetime.now()
 start_punkt_pl = teraz_pl + timedelta(hours=skok_czasu)
 st.sidebar.info(f"Skanuję mecze zaczynające się OD: {start_punkt_pl.strftime('%d.%m o %H:%M')}")
 
+
+
+
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 **🛡️ Strategia 7 Kroków:**
