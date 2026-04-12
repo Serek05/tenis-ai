@@ -30,11 +30,11 @@ def szukaj_value(sport_key, sport_name):
         # Skaczemy do jutra, by ominąć blokadę najbliższych 50 meczów
         start_skanu = (teraz + timedelta(days=1)).replace(hour=2, minute=0, second=0).strftime("%Y-%m-%dT%H:%M:%SZ")
         koniec_skanu = (teraz + timedelta(days=3)).replace(hour=23, minute=59, second=59).strftime("%Y-%m-%dT%H:%M:%SZ")
-        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={jutro_start}&apiKey={KLUCZ}"
+        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={dzis_koniec}&apiKey={KLUCZ}"
     else:
         # Standardowy skan na najbliższe 12h
         koniec_skanu = (teraz + timedelta(hours=12)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeTo={dzis_koniec}&apiKey={KLUCZ}"
+        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={dzis_koniec}&apiKey={KLUCZ}"
     
     try:
         odpowiedz = requests.get(url, timeout=15)
