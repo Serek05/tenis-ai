@@ -25,16 +25,18 @@ KLUCZ = "8e65c70e422cd12b3be347f106596f7d"
 def szukaj_value(sport_key, sport_name):
     teraz = datetime.utcnow()
     
-    # POPRAWIONE ADRESY URL:
     if horyzont == "Jutro / Przyszłość (Głęboki skan)":
-        # Skaczemy do jutra, by ominąć blokadę najbliższych 50 meczów
-        start_skanu = (teraz + timedelta(days=1)).replace(hour=2, minute=0, second=0).strftime("%Y-%m-%dT%H:%M:%SZ")
-        koniec_skanu = (teraz + timedelta(days=3)).replace(hour=23, minute=59, second=59).strftime("%Y-%m-%dT%H:%M:%SZ")
+        # 1. TUTAJ TWORZYMY ZMIENNĄ (To naprawia NameError)
+        dzis_koniec = (teraz + timedelta(days=1)).replace(hour=2, minute=0, second=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+        
+        # 2. TUTAJ JEJ UŻYWAMY
         url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={dzis_koniec}&apiKey={KLUCZ}"
+    
     else:
-        # Standardowy skan na najbliższe 12h
+        # Dla opcji "Na teraz" tworzymy inną zmienną
         koniec_skanu = (teraz + timedelta(hours=12)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={dzis_koniec}&apiKey={KLUCZ}"
+        url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}"
+
     
     try:
         odpowiedz = requests.get(url, timeout=15)
