@@ -54,7 +54,7 @@ def szukaj_value(sport_key, sport_name):
             
             for mecz in dane:
                 bookmakers = mecz.get('bookmakers', [])
-                if len(bookmakers) < 3: continue
+                if len(bookmakers) < 1: continue
                 
                 # Konwersja czasu na polski
                 start_time_pl = datetime.strptime(mecz['commence_time'], "%Y-%m-%dT%H:%M:%SZ") + timedelta(hours=2)
@@ -78,7 +78,7 @@ def szukaj_value(sport_key, sport_name):
                         najlepszy = max(kursy)
                         value = (najlepszy / srednia) - 1
                         
-                        if 1.30 <= najlepszy <= 3.00 and value > 0.05:
+                        if 1.30 <= najlepszy <= 3.00 and value > 0.01:
                             wyniki_meczu.append({'nazwa': t_name, 'kurs': najlepszy, 'val': value})
                     except: continue
                 
