@@ -43,7 +43,7 @@ def szukaj_value(sport_key, sport_name):
     
     
     # POPRAWIONY URL:
-    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&apiKey={KLUCZ}"
+    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}"
     
     try:
         odpowiedz = requests.get(url, timeout=15)
