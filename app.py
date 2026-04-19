@@ -21,17 +21,17 @@ st.sidebar.info(f"Skanuję mecze OD: {start_punkt_pl.strftime('%d.%m o %H:%M')}"
 # ttl=1 wymusza odświeżanie danych co sekundę, żeby nie pokazywać starych wyników
 @st.cache_data(ttl=1)
 def szukaj_value(sport_key, sport_name, przesuniecie):
-    # Brutalne czyszczenie starej pamięci
-    st.cache_data.clear()
-    
+    # Dodaj to na samym początku funkcji:
+    import time
+    random_buster = str(time.time()) 
+
     teraz_utc = datetime.utcnow()
-    # Obliczamy czas na podstawie przesunięcia z suwaka
     start_skanu = (teraz_utc + timedelta(hours=przesuniecie)).strftime("%Y-%m-%dT%H:%M:%SZ")
     koniec_skanu = (teraz_utc + timedelta(hours=przesuniecie + 4)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # W URL dodaj &cache={random_buster}
+    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}&v={random_buster}"
     
-    # URL z v4, TimeFrom oraz znacznikiem odświeżania timestamp
-    ts = teraz_utc.strftime("%H%M%S")
-    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}&v={ts}&status=upcoming"
     
     try:
         odpowiedz = requests.get(url, timeout=15)
