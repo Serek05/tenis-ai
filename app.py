@@ -2,48 +2,49 @@ import streamlit as st
 import requests
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="AI Skaner 5.5 - Gold Machine", page_icon="🎯")
-st.title("🎯 AI Skaner 5.5: Złota Maszyna Czasu")
+st.set_page_config(page_title="AI Skaner 5.6 - Ultra Refresh", page_icon="🎯")
+st.title("🎯 AI Skaner 5.6: Maszyna Czasu")
 
-# --- 1. KONFIGURACJA W PASKU BOCZNYM (Musi być na górze!) ---
+# --- 1. KONFIGURACJA ---
 st.sidebar.header("⚙️ Ustawienia Skanera")
 KLUCZ = "8e65c70e422cd12b3be347f106596f7d"
 
-# SUWAK: Steruje zmienną 'skok_czasu'
+# SUWAK: Musi być przed funkcją
 skok_czasu = st.sidebar.slider("Przesuń start skanowania o (godziny):", 0, 72, 0)
 
-# Napis pod suwakiem dla Ciebie
+# Napis pomocniczy
 teraz_pl = datetime.now()
 start_punkt_pl = teraz_pl + timedelta(hours=skok_czasu)
-st.sidebar.info(f"Skanuję mecze zaczynające się OD: {start_punkt_pl.strftime('%d.%m o %H:%M')}")
+st.sidebar.info(f"Skanuję mecze OD: {start_punkt_pl.strftime('%d.%m o %H:%M')}")
 
-def szukaj_value(sport_key, sport_name):
-    # WYMUSZENIE ODŚWIEŻENIA: Czyścimy starą pamięć przy każdym kliknięciu
+# --- 2. FUNKCJA SKANUJĄCA ---
+# ttl=1 wymusza odświeżanie danych co sekundę, żeby nie pokazywać starych wyników
+@st.cache_data(ttl=1)
+def szukaj_value(sport_key, sport_name, przesuniecie):
+    # Brutalne czyszczenie starej pamięci
     st.cache_data.clear()
+    
     teraz_utc = datetime.utcnow()
+    # Obliczamy czas na podstawie przesunięcia z suwaka
+    start_skanu = (teraz_utc + timedelta(hours=przesuniecie)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    koniec_skanu = (teraz_utc + timedelta(hours=przesuniecie + 24)).strftime("%Y-%m-%dT%H:%M:%SZ")
     
-    # Unikalny znacznik czasu, żeby serwer API nie wysłał nam starych danych
-    timestamp = teraz_utc.strftime("%H%M%S")
-    
-    # 2. OBLICZENIA CZASU (Wewnątrz funkcji, żeby suwak działał!)
-    start_skanu = (teraz_utc + timedelta(hours=skok_czasu)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    koniec_skanu = (teraz_utc + timedelta(hours=skok_czasu + 24)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    
-    # 3. ADRES URL (Z 'TimeFrom', 'TimeTo' oraz 'v=' dla odświeżania)
-    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}&v={timestamp}"
+    # URL z v4, TimeFrom oraz znacznikiem odświeżania timestamp
+    ts = teraz_utc.strftime("%H%M%S")
+    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}&v={ts}"
     
     try:
         odpowiedz = requests.get(url, timeout=15)
         if odpowiedz.status_code == 200:
             dane = odpowiedz.json()
             znaleziono = 0
-            st.info(f"Analizuję {len(dane)} meczów od: {start_skanu}")
+            
+            st.info(f"Szukam okazji od godziny: {start_skanu} (UTC)")
             
             for mecz in dane:
                 bookmakers = mecz.get('bookmakers', [])
-                if len(bookmakers) < 3: continue # Wymagamy min. 3 buków
+                if len(bookmakers) < 3: continue 
                 
-                # Czas polski (+2h)
                 start_time_pl = datetime.strptime(mecz['commence_time'], "%Y-%m-%dT%H:%M:%SZ") + timedelta(hours=2)
                 czas_str = start_time_pl.strftime("%d.%m o %H:%M")
                 
@@ -65,7 +66,7 @@ def szukaj_value(sport_key, sport_name):
                         najlepszy = max(kursy)
                         value = (najlepszy / srednia) - 1
                         
-                        # FILTR VALUE: 5% przewagi
+                        # FILTR VALUE 5%
                         if 1.30 <= najlepszy <= 3.00 and value > 0.05:
                             wyniki_meczu.append({'nazwa': t_name, 'kurs': najlepszy, 'val': value})
                     except: continue
@@ -78,24 +79,24 @@ def szukaj_value(sport_key, sport_name):
                     st.write(f"⚔️ {mecz['home_team']} vs {mecz['away_team']}")
                     st.write(f"📈 Kurs AI: **{res['kurs']}** | Przewaga: **+{res['val']*100:.1f}%**")
                     
-                    link1, link2, link3 = st.columns(3)
-                    with link1: st.markdown("[Superbet](https://www.superbet.pl)")
-                    with link2: st.markdown("[STS](https://www.sts.pl)")
-                    with link3: st.markdown("[Fortuna](https://www.efortuna.pl)")
+                    l1, l2, l3 = st.columns(3)
+                    with l1: st.markdown("[Superbet](https://superbet.pl)")
+                    with l2: st.markdown("[STS](https://sts.pl)")
+                    with l3: st.markdown("[Fortuna](https://efortuna.pl)")
                     st.divider()
             
             if znaleziono == 0: 
-                st.warning("Brak okazji w tym oknie. Przesuń suwak dalej (np. na 20h dla jutra).")
+                st.warning("Brak okazji spełniających filtry (Value > 5%, Bukmacherzy min. 3).")
         else: 
-            st.error(f"Błąd API: {odpowiedz.status_code}. Sprawdź limity.")
+            st.error(f"Błąd API: {odpowiedz.status_code}")
     except Exception as e: 
-        st.error(f"Błąd techniczny: {e}")
+        st.error(f"Błąd: {e}")
 
-# --- 4. PRZYCISKI GŁÓWNE ---
-col1, col2, col3 = st.columns(3)
-with col1:
-    if st.button("🎾 TENIS"): szukaj_value("tennis", "Tenis")
-with col2:
-    if st.button("🏀 KOSZ"): szukaj_value("basketball", "Koszykówka")
-with col3:
-    if st.button("⚽ PIŁKA"): szukaj_value("soccer", "Piłka Nożna")
+# --- 3. PRZYCISKI ---
+c1, c2, c3 = st.columns(3)
+with c1:
+    if st.button("🎾 TENIS"): szukaj_value("tennis", "Tenis", skok_czasu)
+with c2:
+    if st.button("🏀 KOSZ"): szukaj_value("basketball", "Koszykówka", skok_czasu)
+with c3:
+    if st.button("⚽ PIŁKA"): szukaj_value("soccer", "Piłka Nożna", skok_czasu)
