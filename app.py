@@ -27,7 +27,7 @@ def szukaj_value(sport_key, sport_name, przesuniecie):
     teraz_utc = datetime.utcnow()
     # Obliczamy czas na podstawie przesunięcia z suwaka
     start_skanu = (teraz_utc + timedelta(hours=przesuniecie)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    koniec_skanu = (teraz_utc + timedelta(hours=przesuniecie + 24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    koniec_skanu = (teraz_utc + timedelta(hours=przesuniecie + 4)).strftime("%Y-%m-%dT%H:%M:%SZ")
     
     # URL z v4, TimeFrom oraz znacznikiem odświeżania timestamp
     ts = teraz_utc.strftime("%H%M%S")
