@@ -31,7 +31,7 @@ def szukaj_value(sport_key, sport_name, przesuniecie):
     
     # URL z v4, TimeFrom oraz znacznikiem odświeżania timestamp
     ts = teraz_utc.strftime("%H%M%S")
-    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}&v={ts}"
+    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}&v={ts}&s={przesuniecie}"
     
     try:
         odpowiedz = requests.get(url, timeout=15)
