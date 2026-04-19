@@ -21,16 +21,16 @@ st.sidebar.info(f"Skanuję mecze OD: {start_punkt_pl.strftime('%d.%m o %H:%M')}"
 # ttl=1 wymusza odświeżanie danych co sekundę, żeby nie pokazywać starych wyników
 @st.cache_data(ttl=1)
 def szukaj_value(sport_key, sport_name, przesuniecie):
-    # Dodaj to na samym początku funkcji:
     import time
-    random_buster = str(time.time()) 
-
+    # Generujemy losowy numer dla każdego kliknięcia
+    buster = str(time.time())
+    
     teraz_utc = datetime.utcnow()
     start_skanu = (teraz_utc + timedelta(hours=przesuniecie)).strftime("%Y-%m-%dT%H:%M:%SZ")
     koniec_skanu = (teraz_utc + timedelta(hours=przesuniecie + 4)).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    # W URL dodaj &cache={random_buster}
-    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}&v={random_buster}"
+    
+    # URL w nowej linii, z poprawnym v={buster}
+    url = f"https://api.the-odds-api.com/v4/sports/{sport_key}/odds/?regions=eu&markets=h2h&commenceTimeFrom={start_skanu}&commenceTimeTo={koniec_skanu}&apiKey={KLUCZ}&v={buster}"
     
     
     try:
